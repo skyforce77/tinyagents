@@ -112,6 +112,7 @@ func (s *System) spawn(parent *actorRuntime, prefix string, spec Spec) (Ref, err
 		system:     s,
 		pid:        pid,
 		spec:       spec,
+		parent:     parent,
 		actor:      spec.Factory(),
 		localStore: newLocalStore(),
 		mailbox:    mailbox.New(spec.Mailbox),

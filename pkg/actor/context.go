@@ -31,6 +31,14 @@ type Context interface {
 	Forward(target Ref, msg any) error
 	// Respond replies to the current Sender (or the Ask reply channel).
 	Respond(msg any) error
+
+	// Watch subscribes this actor to target's termination; a Terminated
+	// message is delivered once target's run loop exits. Watching the
+	// same target twice is a no-op. Watching a Ref that has already
+	// stopped still delivers Terminated synchronously.
+	Watch(target Ref) error
+	// Unwatch removes the subscription installed by Watch.
+	Unwatch(target Ref) error
 }
 
 // actorContext is the concrete Context given to one Receive call. It is
@@ -85,6 +93,26 @@ func (c *actorContext) Forward(target Ref, msg any) error {
 		return errors.New("actor: Forward target is nil")
 	}
 	return target.tellFrom(msg, c.sender)
+}
+
+func (c *actorContext) Watch(target Ref) error {
+	lr, ok := target.(*localRef)
+	if !ok {
+		return errors.New("actor: Watch target is not a local Ref")
+	}
+	lr.runtime.addWatcher(c.runtime)
+	c.runtime.addWatching(lr.runtime)
+	return nil
+}
+
+func (c *actorContext) Unwatch(target Ref) error {
+	lr, ok := target.(*localRef)
+	if !ok {
+		return errors.New("actor: Unwatch target is not a local Ref")
+	}
+	lr.runtime.removeWatcher(c.runtime.pid)
+	c.runtime.removeWatching(lr.runtime.pid)
+	return nil
 }
 
 func (c *actorContext) Respond(msg any) error {
