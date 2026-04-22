@@ -26,6 +26,5 @@ _testmain.go
 .idea/
 
 # Claude Code agent worktrees (local-only; local settings stay project-private)
-.claude/worktrees/
-.claude/settings.local.json
+.claude
 .git_commit_msg
