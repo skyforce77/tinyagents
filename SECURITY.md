@@ -45,13 +45,16 @@ Out of scope:
 
 ## Known advisories
 
-tinyagents 0.1.x pulls `github.com/ollama/ollama@v0.5.12` for its Ollama
-adapter. `govulncheck` flags nine advisories in that module (GO-2025-3548
-family). Newer ollama releases change the Go SDK surface in ways that are
-not yet adapted in `pkg/llm/ollama`. A pinned upgrade is tracked as a
-roadmap item for 0.2; in the meantime, operators who treat Ollama endpoints
-as trusted (the recommended deployment) are not at additional risk from
-these advisories.
+tinyagents 0.1.x depends on `github.com/ollama/ollama` for its Ollama
+adapter. `govulncheck` flags nine advisories in that module, all marked
+`Fixed in: N/A`. These advisories target the ollama server binary
+(model-serving paths, local file access, prompt execution) and not the
+`api` package that `pkg/llm/ollama` consumes — but Go's module-level
+import graph pulls the whole repo's `init()` chains into our build, so
+call-graph analysis reports the dependency regardless of runtime reach.
+In practice, tinyagents operates as an HTTP client against an external
+ollama endpoint; the vulnerable server code is never executed by this
+library.
 
 CI runs `govulncheck` on every push and surfaces findings without gating
 releases, so new advisories are visible in workflow logs.

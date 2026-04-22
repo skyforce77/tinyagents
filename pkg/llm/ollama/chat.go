@@ -83,9 +83,9 @@ func buildChatRequest(req llm.ChatRequest, stream bool) (*oapi.ChatRequest, erro
 			Content: m.Content,
 		}
 		for _, tc := range m.ToolCalls {
-			var args map[string]any
+			var args oapi.ToolCallFunctionArguments
 			if len(tc.Arguments) > 0 {
-				if err := json.Unmarshal(tc.Arguments, &args); err != nil {
+				if err := args.UnmarshalJSON(tc.Arguments); err != nil {
 					return nil, err
 				}
 			}
