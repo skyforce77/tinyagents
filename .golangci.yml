@@ -1,0 +1,34 @@
+# golangci-lint config for tinyagents.
+# Keep the set small and opinionated; add linters only when a recurring class
+# of bugs or readability issues justifies the noise.
+run:
+  timeout: 5m
+  go: '1.22'
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - revive
+    - gosec
+    - ineffassign
+    - unused
+    - gofmt
+
+linters-settings:
+  revive:
+    rules:
+      - name: exported
+        disabled: false
+      - name: var-naming
+      - name: unused-parameter
+        disabled: true # actor Receive signatures often ignore ctx or msg
+
+issues:
+  # Don't skip any dirs by default; tests get the same treatment as production.
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec # test fixtures sometimes need predictable randomness, etc.
