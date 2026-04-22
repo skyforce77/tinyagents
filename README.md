@@ -1,6 +1,6 @@
 # tinyagents
 
-A minimalist actor system for LLM agent orchestration in Go — each agent owns its provider.
+A minimalist actor system for LLM agent orchestration in Go — each agent owns its own provider.
 
 `tinyagents` is a Go library for composing LLM-powered agents into typed,
 supervised actor systems. Agents communicate through mailboxes and routers,
