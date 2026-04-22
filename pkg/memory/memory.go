@@ -6,25 +6,23 @@ package memory
 import (
 	"context"
 	"errors"
+
+	"github.com/skyforce77/tinyagents/pkg/llm"
 )
 
 // ErrNotSupported is returned by implementations that don't implement a
 // particular method (e.g. Search on the ring buffer).
 var ErrNotSupported = errors.New("memory: feature not supported")
 
-// Message is one element of a chat transcript.
-type Message struct {
-	Role    string
-	Content string
-}
-
-// Memory is the agent-facing short/long-term store.
+// Memory is the agent-facing short/long-term store. Conversations are built
+// from llm.Message values so the same data can flow straight into
+// llm.ChatRequest.Messages without a conversion step.
 type Memory interface {
-	Append(ctx context.Context, m Message) error
-	// Window returns the most recent n messages in chronological order (oldest
-	// first). n == 0 means "everything". Implementations may cap n at their
-	// own capacity.
-	Window(ctx context.Context, n int) ([]Message, error)
+	Append(ctx context.Context, m llm.Message) error
+	// Window returns the most recent n messages in chronological order
+	// (oldest first). n <= 0 means "everything". Implementations may cap n
+	// at their own capacity.
+	Window(ctx context.Context, n int) ([]llm.Message, error)
 	// Search is optional. If unsupported, return (nil, ErrNotSupported).
-	Search(ctx context.Context, q string, k int) ([]Message, error)
+	Search(ctx context.Context, q string, k int) ([]llm.Message, error)
 }

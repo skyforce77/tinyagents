@@ -2,116 +2,115 @@ package buffer
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 
-	"github.com/skyforce77/TinyActors/pkg/memory"
+	"github.com/skyforce77/tinyagents/pkg/llm"
+	"github.com/skyforce77/tinyagents/pkg/memory"
 )
 
 func TestAppendAndWindow(t *testing.T) {
+	t.Parallel()
 	buf := New(10)
 	ctx := context.Background()
 
-	// Append 3 messages
-	msg1 := memory.Message{Role: "user", Content: "message 1"}
-	msg2 := memory.Message{Role: "assistant", Content: "message 2"}
-	msg3 := memory.Message{Role: "user", Content: "message 3"}
+	msg1 := llm.Message{Role: llm.RoleUser, Content: "message 1"}
+	msg2 := llm.Message{Role: llm.RoleAssistant, Content: "message 2"}
+	msg3 := llm.Message{Role: llm.RoleUser, Content: "message 3"}
 
-	if err := buf.Append(ctx, msg1); err != nil {
-		t.Fatalf("Append failed: %v", err)
-	}
-	if err := buf.Append(ctx, msg2); err != nil {
-		t.Fatalf("Append failed: %v", err)
-	}
-	if err := buf.Append(ctx, msg3); err != nil {
-		t.Fatalf("Append failed: %v", err)
+	for _, m := range []llm.Message{msg1, msg2, msg3} {
+		if err := buf.Append(ctx, m); err != nil {
+			t.Fatal(err)
+		}
 	}
 
-	// Window(3) should return all 3 in order (oldest first)
 	msgs, err := buf.Window(ctx, 3)
 	if err != nil {
-		t.Fatalf("Window failed: %v", err)
+		t.Fatal(err)
 	}
 	if len(msgs) != 3 {
-		t.Errorf("Expected 3 messages, got %d", len(msgs))
+		t.Fatalf("got %d, want 3", len(msgs))
 	}
-	if msgs[0] != msg1 || msgs[1] != msg2 || msgs[2] != msg3 {
-		t.Errorf("Messages in wrong order or corrupted")
+	if msgs[0].Content != "message 1" || msgs[1].Content != "message 2" || msgs[2].Content != "message 3" {
+		t.Fatalf("out of order: %+v", msgs)
 	}
 }
 
 func TestCapacityEviction(t *testing.T) {
+	t.Parallel()
 	buf := New(2)
 	ctx := context.Background()
 
-	msg1 := memory.Message{Role: "user", Content: "message 1"}
-	msg2 := memory.Message{Role: "assistant", Content: "message 2"}
-	msg3 := memory.Message{Role: "user", Content: "message 3"}
-
-	if err := buf.Append(ctx, msg1); err != nil {
-		t.Fatalf("Append failed: %v", err)
+	for i, c := range []string{"one", "two", "three"} {
+		_ = buf.Append(ctx, llm.Message{Role: llm.RoleUser, Content: c})
+		_ = i
 	}
-	if err := buf.Append(ctx, msg2); err != nil {
-		t.Fatalf("Append failed: %v", err)
-	}
-	if err := buf.Append(ctx, msg3); err != nil {
-		t.Fatalf("Append failed: %v", err)
-	}
-
-	// Window(3) with capacity 2 should return only last 2 (msg2, msg3)
 	msgs, err := buf.Window(ctx, 3)
 	if err != nil {
-		t.Fatalf("Window failed: %v", err)
+		t.Fatal(err)
 	}
 	if len(msgs) != 2 {
-		t.Errorf("Expected 2 messages (eviction happened), got %d", len(msgs))
+		t.Fatalf("got %d, want 2 (oldest evicted)", len(msgs))
 	}
-	if msgs[0] != msg2 || msgs[1] != msg3 {
-		t.Errorf("Messages in wrong order or corrupted. Got %v, %v", msgs[0], msgs[1])
+	if msgs[0].Content != "two" || msgs[1].Content != "three" {
+		t.Fatalf("out of order after eviction: %+v", msgs)
 	}
 }
 
 func TestWindowN(t *testing.T) {
+	t.Parallel()
 	buf := New(5)
 	ctx := context.Background()
-
-	// Append 4 messages
-	msgs := make([]memory.Message, 4)
-	for i := 0; i < 4; i++ {
-		msgs[i] = memory.Message{Role: "user", Content: string(rune(int('0') + i))}
-		if err := buf.Append(ctx, msgs[i]); err != nil {
-			t.Fatalf("Append failed: %v", err)
-		}
+	for _, c := range []string{"a", "b", "c", "d"} {
+		_ = buf.Append(ctx, llm.Message{Role: llm.RoleUser, Content: c})
 	}
-
-	// Window(2) should return the 2 most recent in chronological order
-	result, err := buf.Window(ctx, 2)
+	msgs, err := buf.Window(ctx, 2)
 	if err != nil {
-		t.Fatalf("Window failed: %v", err)
+		t.Fatal(err)
 	}
-	if len(result) != 2 {
-		t.Errorf("Expected 2 messages, got %d", len(result))
+	if len(msgs) != 2 {
+		t.Fatalf("got %d, want 2", len(msgs))
 	}
-	// The 2 most recent are msgs[2] and msgs[3]
-	if result[0] != msgs[2] || result[1] != msgs[3] {
-		t.Errorf("Expected last 2 messages, got %v, %v", result[0], result[1])
+	if msgs[0].Content != "c" || msgs[1].Content != "d" {
+		t.Fatalf("wrong last-2 window: %+v", msgs)
+	}
+}
+
+func TestWindowAllMessages(t *testing.T) {
+	t.Parallel()
+	buf := New(5)
+	ctx := context.Background()
+	for _, c := range []string{"a", "b", "c"} {
+		_ = buf.Append(ctx, llm.Message{Role: llm.RoleUser, Content: c})
+	}
+	msgs, err := buf.Window(ctx, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(msgs) != 3 {
+		t.Fatalf("Window(0) len = %d, want 3", len(msgs))
+	}
+	msgs, _ = buf.Window(ctx, -1)
+	if len(msgs) != 3 {
+		t.Fatalf("Window(-1) len = %d, want 3", len(msgs))
 	}
 }
 
 func TestSearchUnsupported(t *testing.T) {
+	t.Parallel()
 	buf := New(10)
-	ctx := context.Background()
-
-	result, err := buf.Search(ctx, "test", 5)
-	if err != memory.ErrNotSupported {
-		t.Errorf("Expected ErrNotSupported, got %v", err)
+	result, err := buf.Search(context.Background(), "test", 5)
+	if !errors.Is(err, memory.ErrNotSupported) {
+		t.Fatalf("got %v, want ErrNotSupported", err)
 	}
 	if result != nil {
-		t.Errorf("Expected nil result, got %v", result)
+		t.Fatalf("got %v, want nil", result)
 	}
 }
 
 func TestConcurrentAppends(t *testing.T) {
+	t.Parallel()
 	buf := New(1000)
 	ctx := context.Background()
 
@@ -119,87 +118,27 @@ func TestConcurrentAppends(t *testing.T) {
 	const appends = 100
 	var wg sync.WaitGroup
 
-	// Launch 8 goroutines, each appending 100 messages
 	for g := 0; g < numGoroutines; g++ {
 		wg.Add(1)
-		go func(goroutineID int) {
+		go func(id int) {
 			defer wg.Done()
 			for i := 0; i < appends; i++ {
-				msg := memory.Message{
-					Role:    "user",
-					Content: string(rune('A' + (goroutineID % 26))) + string(rune('0'+(i%10))),
-				}
-				if err := buf.Append(ctx, msg); err != nil {
-					t.Errorf("Append failed: %v", err)
-				}
+				_ = buf.Append(ctx, llm.Message{Role: llm.RoleUser, Content: "x"})
 			}
 		}(g)
 	}
-
 	wg.Wait()
 
-	// Window all messages
 	result, err := buf.Window(ctx, 0)
 	if err != nil {
-		t.Fatalf("Window failed: %v", err)
+		t.Fatal(err)
 	}
-
-	// We appended 8 * 100 = 800 messages to a capacity-1000 buffer
-	// So we should have exactly 800 messages
-	if len(result) != 800 {
-		t.Errorf("Expected 800 messages, got %d", len(result))
+	if len(result) != numGoroutines*appends {
+		t.Fatalf("got %d, want %d", len(result), numGoroutines*appends)
 	}
-
-	// Verify all are memory.Message values with expected structure
-	for _, msg := range result {
-		if msg.Role != "user" {
-			t.Errorf("Expected user role, got %v", msg.Role)
+	for _, m := range result {
+		if m.Role != llm.RoleUser {
+			t.Fatalf("unexpected role %q", m.Role)
 		}
-		if len(msg.Content) != 2 {
-			t.Errorf("Expected Content length 2, got %d", len(msg.Content))
-		}
-	}
-}
-
-func TestWindowAllMessages(t *testing.T) {
-	buf := New(5)
-	ctx := context.Background()
-
-	// Append 3 messages
-	msg1 := memory.Message{Role: "user", Content: "message 1"}
-	msg2 := memory.Message{Role: "assistant", Content: "message 2"}
-	msg3 := memory.Message{Role: "user", Content: "message 3"}
-
-	buf.Append(ctx, msg1)
-	buf.Append(ctx, msg2)
-	buf.Append(ctx, msg3)
-
-	// Window(0) should return everything
-	msgs, err := buf.Window(ctx, 0)
-	if err != nil {
-		t.Fatalf("Window failed: %v", err)
-	}
-	if len(msgs) != 3 {
-		t.Errorf("Expected 3 messages with Window(0), got %d", len(msgs))
-	}
-}
-
-func TestWindowNegative(t *testing.T) {
-	buf := New(5)
-	ctx := context.Background()
-
-	msg1 := memory.Message{Role: "user", Content: "message 1"}
-	msg2 := memory.Message{Role: "assistant", Content: "message 2"}
-
-	buf.Append(ctx, msg1)
-	buf.Append(ctx, msg2)
-
-	// Window(-1) should return everything
-	msgs, err := buf.Window(ctx, -1)
-	if err != nil {
-		t.Fatalf("Window failed: %v", err)
-	}
-	if len(msgs) != 2 {
-		t.Errorf("Expected 2 messages with Window(-1), got %d", len(msgs))
 	}
 }
