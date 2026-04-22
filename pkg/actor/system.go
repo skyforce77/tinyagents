@@ -136,6 +136,32 @@ func (s *System) unregister(pid PID) {
 	s.mu.Unlock()
 }
 
+// Lookup returns a Ref to the actor whose PID path equals the argument, or
+// (nil, false) if no such actor is currently registered. This is a linear
+// scan over actors; names are expected to be small (dozens, not thousands).
+func (s *System) Lookup(path string) (Ref, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for pid, rt := range s.actors {
+		if pid.Path == path {
+			return rt.ref, true
+		}
+	}
+	return nil, false
+}
+
+// List returns every Ref currently known to the system. Order is
+// unspecified and may change across calls.
+func (s *System) List() []Ref {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make([]Ref, 0, len(s.actors))
+	for _, rt := range s.actors {
+		out = append(out, rt.ref)
+	}
+	return out
+}
+
 // Stop asks every actor to finish its current message, then waits for each
 // runtime to exit. If ctx cancels first, Stop returns ctx.Err(); the system
 // is then left in a partially-stopped state (all mailboxes closed but some
