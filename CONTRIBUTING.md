@@ -12,7 +12,7 @@ cd tinyagents
 go mod download
 ```
 
-Go 1.22 or later is required. No additional build tools are needed for the core
+Go 1.24 or later is required. No additional build tools are needed for the core
 library; examples with external services (Ollama, Anthropic, OpenAI) require the
 respective credentials and running services.
 
