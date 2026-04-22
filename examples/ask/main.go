@@ -1,32 +1,47 @@
+// ask demonstrates the request/reply pattern with Ref.Ask and a deadline.
 package main
 
 import (
+	"context"
 	"fmt"
-	ta "github.com/skyforce77/TinyActors"
+	"strings"
 	"time"
+
+	"github.com/skyforce77/tinyagents/pkg/actor"
 )
 
-type AddJob struct {
-	a int
-	b int
+type upper struct{}
+
+func (upper) Receive(ctx actor.Context, msg any) error {
+	s, ok := msg.(string)
+	if !ok {
+		return ctx.Respond(fmt.Errorf("want string, got %T", msg))
+	}
+	return ctx.Respond(strings.ToUpper(s))
 }
 
 func main() {
-	system := ta.NewSystem()
+	sys := actor.NewSystem("ask")
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		_ = sys.Stop(ctx)
+	}()
 
-	actor1 := system.Declare(func(self *ta.Actor, message *ta.Message) {
-		if add, ok := message.Value.(AddJob); ok {
-			message.Answer(ta.NewMessage(add.a + add.b))
-		}
+	ref, err := sys.Spawn(actor.Spec{
+		Name:    "upper",
+		Factory: func() actor.Actor { return upper{} },
 	})
-
-	system.Start()
-	defer system.Finish()
-
-	result, err := actor1.PushAsk(AddJob{10, 5}, 10*time.Second)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("Result: %d", result.Value.(int))
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+
+	resp, err := ref.Ask(ctx, "hello tinyagents")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("reply:", resp)
 }
