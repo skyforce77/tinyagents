@@ -5,7 +5,7 @@ A minimalist actor system for LLM agent orchestration in Go — each agent owns 
 [![Go Reference](https://pkg.go.dev/badge/github.com/skyforce77/tinyagents.svg)](https://pkg.go.dev/github.com/skyforce77/tinyagents)
 [![CI](https://github.com/skyforce77/tinyagents/actions/workflows/ci.yml/badge.svg)](https://github.com/skyforce77/tinyagents/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](./LICENSE)
-[![Go](https://img.shields.io/badge/go-1.22+-00ADD8.svg)](https://golang.org)
+[![Go](https://img.shields.io/badge/go-1.24+-00ADD8.svg)](https://golang.org)
 
 tinyagents is a Go library for composing LLM-powered agents into typed, supervised actor
 systems. Agents communicate through bounded or unbounded mailboxes, route messages via

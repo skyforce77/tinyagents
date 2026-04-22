@@ -43,6 +43,19 @@ Out of scope:
   missing TLS at the operator layer, etc.) — see `docs/clustering.md` for
   the supported threat model.
 
+## Known advisories
+
+tinyagents 0.1.x pulls `github.com/ollama/ollama@v0.5.12` for its Ollama
+adapter. `govulncheck` flags nine advisories in that module (GO-2025-3548
+family). Newer ollama releases change the Go SDK surface in ways that are
+not yet adapted in `pkg/llm/ollama`. A pinned upgrade is tracked as a
+roadmap item for 0.2; in the meantime, operators who treat Ollama endpoints
+as trusted (the recommended deployment) are not at additional risk from
+these advisories.
+
+CI runs `govulncheck` on every push and surfaces findings without gating
+releases, so new advisories are visible in workflow logs.
+
 ## Safe harbor
 
 Research conducted in good faith against tinyagents — following this policy,
