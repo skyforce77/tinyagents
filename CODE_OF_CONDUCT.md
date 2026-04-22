@@ -33,7 +33,7 @@ asynchronous channel formally associated with the project.
 ## Reporting
 
 If you see or experience unacceptable behavior, report it privately to the
-project's security / conduct contact: `<CONDUCT-CONTACT>`. Include a
+project's security / conduct contact: skyforce77@users.noreply.github.com. Include a
 description, links to the relevant thread(s), and any context that would help
 assess the situation. Reports are treated confidentially.
 

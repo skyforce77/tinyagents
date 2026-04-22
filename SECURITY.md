@@ -14,7 +14,7 @@ page.
 
 Please report security issues privately rather than in a public GitHub issue.
 
-Send a report to: `<SECURITY-CONTACT>`
+Send a report to: skyforce77@users.noreply.github.com
 
 Include in your report:
 
