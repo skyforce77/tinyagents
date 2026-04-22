@@ -25,7 +25,9 @@ type Func struct {
 	Fn         func(ctx context.Context, args json.RawMessage) (json.RawMessage, error)
 }
 
-func (f Func) Name() string                                                                    { return f.ToolName }
-func (f Func) Description() string                                                             { return f.ToolDesc }
-func (f Func) Schema() json.RawMessage                                                         { return f.ToolSchema }
-func (f Func) Invoke(ctx context.Context, args json.RawMessage) (json.RawMessage, error)      { return f.Fn(ctx, args) }
+func (f Func) Name() string            { return f.ToolName }
+func (f Func) Description() string     { return f.ToolDesc }
+func (f Func) Schema() json.RawMessage { return f.ToolSchema }
+func (f Func) Invoke(ctx context.Context, args json.RawMessage) (json.RawMessage, error) {
+	return f.Fn(ctx, args)
+}

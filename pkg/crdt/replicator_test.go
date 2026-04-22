@@ -33,14 +33,6 @@ func (b *bus) add(id string, r *Replicator) {
 	b.reps[id] = r
 }
 
-// remove unregisters a Replicator from the bus (simulates a late joiner
-// that was not present during an earlier Replicate call).
-func (b *bus) remove(id string) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	delete(b.reps, id)
-}
-
 // broadcastFor returns a Broadcast function whose sender identity is senderID.
 // The returned function delivers to all other replicators registered on the bus.
 func (b *bus) broadcastFor(senderID string) Broadcast {

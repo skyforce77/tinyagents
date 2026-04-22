@@ -50,13 +50,13 @@ type subscriber struct {
 // localCluster is a single-process Cluster implementation. The only member
 // is the local node itself. It is safe for concurrent use.
 type localCluster struct {
-	mu          sync.Mutex
-	self        Member
-	joined      bool
-	closed      bool
-	subs        map[uint64]*subscriber
-	nextID      uint64
-	log         *slog.Logger
+	mu     sync.Mutex
+	self   Member
+	joined bool
+	closed bool
+	subs   map[uint64]*subscriber
+	nextID uint64
+	log    *slog.Logger
 }
 
 // New returns a local Cluster whose only member is the node identified by id.

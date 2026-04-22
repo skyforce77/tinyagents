@@ -156,13 +156,13 @@ func WithSyncInterval(d time.Duration) Option {
 //	// wired to transport inbound:
 //	rep.Deliver(rawPayload)
 type Replicator struct {
-	local  string
-	bcast  Broadcast
-	cfg    config
-	mu     sync.RWMutex
-	crdts  map[string]*entry
-	stopCh chan struct{}
-	once   sync.Once // guards Start
+	local     string
+	bcast     Broadcast
+	cfg       config
+	mu        sync.RWMutex
+	crdts     map[string]*entry
+	stopCh    chan struct{}
+	once      sync.Once // guards Start
 	closeOnce sync.Once
 }
 

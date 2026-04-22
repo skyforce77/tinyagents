@@ -70,10 +70,10 @@ func Spawn(sys *actor.System, spec actor.Spec, kind Kind, poolSize int, cfg Conf
 		Name: spec.Name,
 		Factory: func() actor.Actor {
 			return &routingActor{
-				kind:         kind,
-				cfg:          cfg,
-				workerSpec:   workerTemplate,
-				poolSize:     poolSize,
+				kind:       kind,
+				cfg:        cfg,
+				workerSpec: workerTemplate,
+				poolSize:   poolSize,
 			}
 		},
 		Mailbox: spec.Mailbox,

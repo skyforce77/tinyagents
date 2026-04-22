@@ -52,7 +52,7 @@ type Member struct {
 type EventKind int
 
 const (
-	MemberJoined  EventKind = iota + 1
+	MemberJoined EventKind = iota + 1
 	MemberLeft
 	MemberUpdated // meta changed or member came back after being flagged suspect
 )

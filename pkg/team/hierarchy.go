@@ -115,7 +115,7 @@ func (h *hierarchyActor) Receive(actx actor.Context, msg any) error {
 	sb.WriteString(prompt.Text)
 	sb.WriteString("\n")
 	for i, r := range results {
-		sb.WriteString(fmt.Sprintf("\nWorker %d said:\n%s\n", i, r.resp.Message.Content))
+		fmt.Fprintf(&sb, "\nWorker %d said:\n%s\n", i, r.resp.Message.Content)
 	}
 	sb.WriteString("\nSynthesize a single coherent answer combining the workers' perspectives.")
 

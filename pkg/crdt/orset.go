@@ -166,10 +166,10 @@ func (s *ORSet[T]) Merge(other CRDT) error {
 // Keys in the outer maps are JSON-encoded element values so that any
 // comparable T (including structs) round-trips correctly.
 type orsetWire struct {
-	Node  NodeID                       `json:"node"`
-	Adds  map[string][]string          `json:"adds"`
-	Tombs map[string][]string          `json:"tombs"`
-	Next  uint64                       `json:"next"`
+	Node  NodeID              `json:"node"`
+	Adds  map[string][]string `json:"adds"`
+	Tombs map[string][]string `json:"tombs"`
+	Next  uint64              `json:"next"`
 }
 
 // Snapshot serializes the full set state to JSON.

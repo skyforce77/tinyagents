@@ -14,7 +14,7 @@ import (
 // Merge rule: delegate to GCounter.Merge for both inner counters.
 type PNCounter struct {
 	mu       sync.Mutex
-	Node     NodeID   `json:"node"`
+	Node     NodeID `json:"node"`
 	positive GCounter
 	negative GCounter
 }
