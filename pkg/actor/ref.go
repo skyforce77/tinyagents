@@ -16,11 +16,18 @@ type Ref interface {
 	Ask(ctx context.Context, msg any) (any, error)
 	Stop() error
 
-	// tellFrom is the unexported hook used by actorContext to propagate the
-	// current actor as the message sender. Keeping this unexported means
-	// only the actor package can produce "from" semantics, which keeps the
-	// public Ref surface minimal.
-	tellFrom(msg any, sender Ref) error
+	// forward is the unexported hook used by actorContext to populate the
+	// full envelope (sender + replyTo) without exposing mailbox.Envelope on
+	// the public surface. It is how Context.Tell, Context.Forward, and
+	// Context.Respond reach into a peer actor's mailbox.
+	forward(msg any, sender Ref, replyTo any) error
+}
+
+// LoadReporter is an optional capability: implementations return a rough
+// pending-message count, useful to routers that want to pick the
+// least-loaded worker. localRef implements it.
+type LoadReporter interface {
+	Load() int
 }
 
 // localRef points to a same-process actorRuntime. When clustering lands a
@@ -37,8 +44,16 @@ func (r *localRef) Tell(msg any) error {
 	return r.deliver(mailbox.Envelope{Msg: msg})
 }
 
-func (r *localRef) tellFrom(msg any, sender Ref) error {
-	return r.deliver(mailbox.Envelope{Msg: msg, Sender: sender})
+func (r *localRef) forward(msg any, sender Ref, replyTo any) error {
+	return r.deliver(mailbox.Envelope{Msg: msg, Sender: sender, ReplyTo: replyTo})
+}
+
+// Load reports the current mailbox backlog; satisfies LoadReporter.
+func (r *localRef) Load() int {
+	if r.runtime == nil {
+		return 0
+	}
+	return r.runtime.mailbox.Len()
 }
 
 func (r *localRef) Ask(ctx context.Context, msg any) (any, error) {

@@ -85,14 +85,17 @@ func (c *actorContext) Tell(target Ref, msg any) error {
 	if target == nil {
 		return errors.New("actor: Tell target is nil")
 	}
-	return target.tellFrom(msg, c.runtime.ref)
+	return target.forward(msg, c.runtime.ref, nil)
 }
 
+// Forward preserves both the original Sender and ReplyTo so that Ask-driven
+// replies still reach the originator when a router (or other intermediary)
+// sits between caller and worker.
 func (c *actorContext) Forward(target Ref, msg any) error {
 	if target == nil {
 		return errors.New("actor: Forward target is nil")
 	}
-	return target.tellFrom(msg, c.sender)
+	return target.forward(msg, c.sender, c.replyTo)
 }
 
 func (c *actorContext) Watch(target Ref) error {
@@ -126,11 +129,11 @@ func (c *actorContext) Respond(msg any) error {
 				return errors.New("actor: reply channel full or closed")
 			}
 		case Ref:
-			return rt.tellFrom(msg, c.runtime.ref)
+			return rt.forward(msg, c.runtime.ref, nil)
 		}
 	}
 	if c.sender != nil {
-		return c.sender.tellFrom(msg, c.runtime.ref)
+		return c.sender.forward(msg, c.runtime.ref, nil)
 	}
 	return errors.New("actor: no reply destination")
 }

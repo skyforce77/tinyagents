@@ -110,7 +110,7 @@ func (r *actorRuntime) handleFailure(cause any) bool {
 		return true
 	case supervisor.Escalate:
 		if r.parent != nil {
-			_ = r.parent.ref.tellFrom(Failed{Child: r.pid, Cause: cause}, r.ref)
+			_ = r.parent.ref.forward(Failed{Child: r.pid, Cause: cause}, r.ref, nil)
 		}
 		r.stopReason = cause
 		return false
@@ -165,7 +165,7 @@ func (r *actorRuntime) terminate() {
 
 	term := Terminated{PID: r.pid, Reason: r.stopReason}
 	for _, w := range watchers {
-		_ = w.ref.tellFrom(term, r.ref)
+		_ = w.ref.forward(term, r.ref, nil)
 	}
 	// Unsubscribe from anyone we were watching so they don't hold a stale
 	// pointer to us (and don't try to notify us on their own termination).
@@ -187,7 +187,7 @@ func (r *actorRuntime) addWatcher(w *actorRuntime) {
 	// Terminated" holds.
 	if r.watchers == nil && r.isStopped() {
 		r.watchMu.Unlock()
-		_ = w.ref.tellFrom(Terminated{PID: r.pid, Reason: r.stopReason}, r.ref)
+		_ = w.ref.forward(Terminated{PID: r.pid, Reason: r.stopReason}, r.ref, nil)
 		return
 	}
 	if r.watchers == nil {
