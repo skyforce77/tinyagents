@@ -16,11 +16,11 @@ linters:
     gosec:
       # G115 — integer overflow from int -> uint in hash-modulo conversions is
       # bounded by construction; G404 — pkg/router uses math/rand for a
-      # non-cryptographic worker pick; G118 — cancel functions are stored in
-      # struct fields, not leaked.
+      # non-cryptographic worker pick. G118 (cancel funcs stored in struct
+      # fields, not leaked) is excluded via per-file rules below because the
+      # rule id isn't known to all gosec versions.
       excludes:
         - G115
-        - G118
         - G404
     revive:
       rules:
@@ -47,6 +47,17 @@ linters:
           - revive
         path: pkg/actor/actor\.go
         text: 'type name will be used as actor\.ActorFunc'
+      # G118 (cancel function from WithCancel never called) is a false
+      # positive in pkg/actor/system.go and pkg/transport/tcp/tcp.go where
+      # the cancel func is stored in a struct field for later invocation.
+      - linters:
+          - gosec
+        path: pkg/actor/system\.go
+        text: 'G118'
+      - linters:
+          - gosec
+        path: pkg/transport/tcp/tcp\.go
+        text: 'G118'
     paths:
       - third_party$
       - builtin$
